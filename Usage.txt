@@ -1,3 +1,0 @@
-jLDADMM: A Java package for the LDA and DMM topic models
-	
-Please find the usage of jLDADMM on its website at http://jldadmm.sourceforge.net/
