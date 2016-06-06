@@ -80,7 +80,7 @@ The following command
 
 will produce the clustering scores for all the document-to-topic distribution files with their names ending in `theta`. In this case, the distribution files are `testLDA.theta` and `testDMM.theta`. It also provides the mean and standard deviation of the clustering scores.
 
-To improve evaluation scores (for example, 5% absolute improvements in clustering and classification tasks), the users may consider using the latent feature topic models [3] with the source codes available at [HERE](https://github.com/datquocnguyen/LFTM).
+To improve evaluation scores (for example, 5% absolute improvements in clustering and classification tasks), the users might consider combining the LDA and DMM topic models with word embeddings [3] \(source codes [HERE](https://github.com/datquocnguyen/LFTM)\).
 
 ###References
 
