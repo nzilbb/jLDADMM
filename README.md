@@ -1,6 +1,6 @@
-##jLDADMM: A Java package for the LDA and DMM topic models##
+## jLDADMM: A Java package for the LDA and DMM topic models 
 
-The Java package **jLDADMM** is released to provide alternatives for topic modeling on normal or short texts. Probabilistic topic models, such as Latent Dirichlet Allocation (LDA) [1] and related models [2], are widely used to discover latent topics in document collections. However, applying topic models for short texts (e.g. Tweets) is more challenging because of data sparsity and the limited contexts in such texts. One approach is to combine short texts into long pseudo-documents before training LDA. Another approach is to assume that there is only one topic per document [3].
+**jLDADMM** is released to provide alternatives for topic modeling on normal or short texts. Probabilistic topic models, such as Latent Dirichlet Allocation (LDA) [1] and related models [2], are widely used to discover latent topics in document collections. However, applying topic models for short texts (e.g. Tweets) is more challenging because of data sparsity and the limited contexts in such texts. One approach is to combine short texts into long pseudo-documents before training LDA. Another approach is to assume that there is only one topic per document [3].
 
 jLDADMM provides implementations of the LDA topic model [1] and the one-topic-per-document Dirichlet Multinomial Mixture (DMM) model (i.e. mixture of unigrams) [4]. The implementations of LDA and DMM use the collapsed Gibbs sampling algorithms for inference as described in [5] and [6], respectively. Furthermore, jLDADMM supplies a document clustering evaluation to compare topic models, using two common metrics of Purity and normalized mutual information (NMI) [7].
 
@@ -12,11 +12,11 @@ Bug reports, comments and suggestions about jLDADMM are highly appreciated. As a
 
 ### Using jLDADMM for topic modeling
 
-This section describes the usage of jLDADMM in command line or terminal, using the pre-compiled `jLDADMM.jar` file. Here, it is supposed that Java is already set to run in command line or terminal (e.g. adding Java to the environment variable `path` in Windows OS).
+This section describes the usage of jLDADMM in command line or terminal, using a  pre-compiled file named `jLDADMM.jar`. Here, it is supposed that Java is already set to run in command line or terminal (e.g. adding Java to the environment variable `path` in Windows OS).
 
-Users can find the pre-compiled `jLDADMM.jar` file and source codes in the `jar` and `src` folders, respectively. The users can recompile the source codes by simply running `ant` (it is also expected that `ant` is already installed). In addition, the users can find input examples in the `test` folder.
+Users can find the pre-compiled file `jLDADMM.jar` and source codes in folders `jar` and `src`, respectively. The users can recompile the source codes by simply running `ant` (it is also expected that `ant` is already installed). In addition, the users can find input examples in `test` folder.
 
-**File format of input corpus:**  Similar to the `corpus.txt` file in the `test` folder, jLDADMM assumes that each line in the input corpus represents a document. Here, a document is a sequence of words/tokens separated by white space characters. The users should preprocess the input corpus before training the LDA or DMM topic  models, for example: down-casing, removing non-alphabetic characters and stop-words, removing words shorter than 3 characters and words appearing less than a certain times.  
+**File format of input corpus:**  Similar to file `corpus.txt`  in the `test` folder, jLDADMM assumes that each line in the input corpus represents a document. Here, a document is a sequence of words/tokens separated by white space characters. The users should preprocess the input corpus before training the LDA or DMM topic  models, for example: down-casing, removing non-alphabetic characters and stop-words, removing words shorter than 3 characters and words appearing less than a certain times.  
 
 **Now, we can train LDA or DMM by executing:**
 
@@ -50,17 +50,15 @@ The output files are saved in the same folder containing the input corpus file, 
 
 	$ java -jar jar/jLDADMM.jar -model DMM -corpus test/corpus.txt -beta 0.1 -name testDMM
 
-We have output files of `testDMM.theta`, `testDMM.phi`, `testDMM.topWords`, `testDMM.topicAssignments` and `testDMM.paras`.
+Output files `testDMM.theta`, `testDMM.phi`, `testDMM.topWords`, `testDMM.topicAssignments` and `testDMM.paras` are also in the `test` folder.
 
-###Using jLDADMM for document clustering evaluation
+### Using jLDADMM for document clustering evaluation
 
-Here, we treat each topic as a cluster, and we assign every document the topic with the highest probability given the document [8].
-
-To get the Purity and NMI clustering scores, we perform:
+Here, we treat each topic as a cluster, and we assign every document the topic with the highest probability given the document [8]. To get the Purity and NMI clustering scores, we perform:
 
 	$ java –jar jar/jLDADMM.jar –model Eval –label <Golden_label_file_path> -dir <Directory_path> -prob <Document-topic-prob/Suffix>
 
-`–label`: Specify the path to the ground truth label file. Each line in this label file contains the golden label of the corresponding document in the input corpus. See the `corpus.LABEL` and `corpus.txt` files in the `test` folder.
+`–label`: Specify the path to the ground truth label file. Each line in this label file contains the golden label of the corresponding document in the input corpus. See files `corpus.LABEL` and `corpus.txt` in the `test` folder.
 
 `-dir`: Specify the path to the directory containing document-to-topic distribution files.
 
@@ -72,17 +70,15 @@ To get the Purity and NMI clustering scores, we perform:
 
 	$ java -jar jar/jLDADMM.jar -model Eval -label test/corpus.LABEL -dir test -prob testDMM.theta
 
-The above commands will produce the clustering scores for the `testLDA.theta` and `testDMM.theta` files in the `test` folder, separately.
-
-The following command
+The above commands will produce the clustering scores for files `testLDA.theta` and `testDMM.theta`  in the `test` folder, separately. The following command
 
 	$ java -jar jar/jLDADMM.jar -model Eval -label test/corpus.LABEL -dir test -prob theta
 
-will produce the clustering scores for all the document-to-topic distribution files with their names ending in `theta`. In this case, the distribution files are `testLDA.theta` and `testDMM.theta`. It also provides the mean and standard deviation of the clustering scores.
+will produce the clustering scores for all document-to-topic distribution files with their names ending in `theta`. In this case, they are are `testLDA.theta` and `testDMM.theta`. The command also provides the mean and standard deviation of the clustering scores.
 
-To improve evaluation scores (for example, 5% absolute improvements in clustering and classification tasks), the users might consider combining the LDA and DMM topic models with word embeddings [3] \(source codes [HERE](https://github.com/datquocnguyen/LFTM)\).
+To improve evaluation scores, the users might consider combining the LDA and DMM topic models with word embeddings [3] \(source codes [HERE](https://github.com/datquocnguyen/LFTM)\).
 
-###References
+### References
 
 [1]   David M. Blei, Andrew Y. Ng, and Michael I. Jordan. 2003. Latent Dirichlet Allocation. Journal of Machine Learning Research, 3:993–1022.
 
