@@ -1,6 +1,6 @@
 jLDADMM: A Java package for the LDA and DMM topic models
 
-	Copyright (C) 2015 by Dat Quoc Nguyen 
+	Copyright (C) 2015-2017 by Dat Quoc Nguyen 
 	dat.nguyen@students.mq.edu.au
 	Department of Computing, Macquarie University, Australia
 	

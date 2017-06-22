@@ -44,4 +44,7 @@ public class CmdArgs
 	@Option(name = "-prob")
 	public String prob = "";
 
+	@Option(name = "-paras", usage = "Specify path to hyper-parameter file")
+	public String paras = "";
+
 }
