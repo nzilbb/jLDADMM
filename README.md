@@ -4,9 +4,11 @@
 
 jLDADMM provides implementations of the LDA topic model [1] and the one-topic-per-document Dirichlet Multinomial Mixture (DMM) model (i.e. mixture of unigrams) [4]. The implementations of LDA and DMM use the collapsed Gibbs sampling algorithms for inference as described in [5] and [6], respectively. Furthermore, jLDADMM supplies a document clustering evaluation to compare topic models, using two common metrics of Purity and normalized mutual information (NMI) [7].
 
-Find more information about jLDADMM at its website [http://jldadmm.sourceforge.net/](http://jldadmm.sourceforge.net/). Please cite jLDADMM in all publications reporting on results obtained with the help of jLDADMM:
+Find more information about jLDADMM at [http://jldadmm.sourceforge.net/](http://jldadmm.sourceforge.net/). 
 
-`Dat Quoc Nguyen. jLDADMM: A Java package for the LDA and DMM topic models. 2015.` [[.bib]](http://jldadmm.sourceforge.net/jldadmm.bib)
+Please cite jLDADMM when jLDADMM is used to produce published results or incorporated into other software:
+
+`Dat Quoc Nguyen. jLDADMM: A Java package for the LDA and DMM topic models. 2015. URL http://jldadmm.sourceforge.net/.` [[.bib]](http://jldadmm.sourceforge.net/jldadmm.bib)
 
 Bug reports, comments and suggestions about jLDADMM are highly appreciated. As a free open-source package, jLDADMM is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
@@ -30,9 +32,9 @@ where parameters in [ ] are optional.
 
 `-ntopics <int>`: Specify the number of topics. The default value is 20.
 
-`-alpha <double>`: Specify the hyper-parameter `alpha`. The default value is 0.1. See experimental details in [6, 8].
+`-alpha <double>`: Specify the hyper-parameter `alpha`. Following [6, 8], the default  `alpha` value is 0.1.
 
-`-beta <double>`: Specify the hyper-parameter `beta`. The default value is 0.01 which is a common setting in the literature [5]. Following [6], the users may consider to the `beta` value of 0.1 for short texts.
+`-beta <double>`: Specify the hyper-parameter `beta`. The default `beta` value is 0.01 which is a common setting in  literature [5]. Following [6], the users may consider to the `beta` value of 0.1 for short texts.
 
 `-niters <int>`: Specify the number of Gibbs sampling iterations. The default value is 2000.
 
@@ -78,13 +80,27 @@ will produce the clustering scores for all document-to-topic distribution files 
 
 To improve evaluation scores, the users might consider combining the LDA and DMM topic models with word embeddings [3] \(source codes [HERE](https://github.com/datquocnguyen/LFTM)\).
 
+### Topic inference on new/unseen corpus
+
+To infer topics on a new/unseen corpus using a pre-trained LDA/DMM topic model, we perform:
+
+`$ java -jar jar/jLDADMM.jar -model <LDAinf_or_DMMinf> -paras <Hyperparameter_file_path> -corpus <Unseen_corpus_file_path> [-niters <int>] [-twords <int>] [-name <String>] [-sstep <int>]`
+
+* `-paras`: Specify the path to the hyper-parameter file produced by the pre-trained LDA/DMM topic model.
+
+<b>Examples:</b>
+
+`$ java -jar jar/jLDADMM.jar -model LDAinf -paras test/testLDA.paras -corpus test/unseenTest.txt -niters 100 -name testLDAinf`
+
+`$ java -jar jar/jLDADMM.jar -model DMMinf -paras test/testDMM.paras -corpus test/unseenTest.txt -niters 100 -name testDMMinf`
+
 ### References
 
 [1]   David M. Blei, Andrew Y. Ng, and Michael I. Jordan. 2003. Latent Dirichlet Allocation. Journal of Machine Learning Research, 3:993–1022.
 
 [2]   David M. Blei. 2012. Probabilistic Topic Models. Communications of the ACM, 55(4):77–84.
 
-[3]   Dat Quoc Nguyen, Richard Billingsley, Lan Du and Mark Johnson. 2015. [Improving Topic Models with Latent Feature Word Representations](https://tacl2013.cs.columbia.edu/ojs/index.php/tacl/article/view/582/158). Transactions of the Association for Computational Linguistics, vol. 3, pp. 299-313.
+[3]   Dat Quoc Nguyen, Richard Billingsley, Lan Du and Mark Johnson. 2015. [Improving Topic Models with Latent Feature Word Representations](https://tacl2013.cs.columbia.edu/ojs/index.php/tacl/article/view/582/158). Transactions of the Association for Computational Linguistics, vol. 3, pp. 299-313. [[CODE]](https://github.com/datquocnguyen/LFTM)
 
 [4]   Kamal Nigam, AK McCallum, S Thrun, and T Mitchell. 2000. Text Classification from Labeled and Unlabeled Documents Using EM. Machine learning, 39:103– 134.
 
