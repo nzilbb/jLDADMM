@@ -4,11 +4,14 @@
 
 jLDADMM provides implementations of the LDA topic model [1] and the one-topic-per-document Dirichlet Multinomial Mixture (DMM) model (i.e. mixture of unigrams) [4]. The implementations of LDA and DMM use the collapsed Gibbs sampling algorithms for inference as described in [5] and [6], respectively. Furthermore, jLDADMM supplies a document clustering evaluation to compare topic models, using two common metrics of Purity and normalized mutual information (NMI) [7].
 
-Find more information about jLDADMM at [http://jldadmm.sourceforge.net/](http://jldadmm.sourceforge.net/). 
+Please cite jLDADMM whenever jLDADMM is used to produce published results or incorporated into other software:
 
-Please cite jLDADMM when jLDADMM is used to produce published results or incorporated into other software:
-
-`Dat Quoc Nguyen. jLDADMM: A Java package for the LDA and DMM topic models. 2015. URL http://jldadmm.sourceforge.net/.` [[.bib]](http://jldadmm.sourceforge.net/jldadmm.bib)
+	@article{jldadmm,
+	  title={{jLDADMM: A Java package for the LDA and DMM topic models}},
+	  author={Dat Quoc Nguyen},
+	  journal={arXiv preprint arXiv:1808.03835},
+	  year={2018}
+	}
 
 Bug reports, comments and suggestions about jLDADMM are highly appreciated. As a free open-source package, jLDADMM is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 
