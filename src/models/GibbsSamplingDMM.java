@@ -34,14 +34,8 @@ import utility.FuncUtils;
  * @author: Dat Quoc Nguyen
  */
 
-public class GibbsSamplingDMM implements IJLDADMMModel
+public class GibbsSamplingDMM extends JLDADMMModelBase
 {
-	public double alpha; // Hyper-parameter alpha
-	public double beta; // Hyper-parameter alpha
-	public int numTopics; // Number of topics
-	public int numIterations; // Number of Gibbs sampling iterations
-	public int topWords; // Number of most probable words for each topic
-
 	public double alphaSum; // alpha * numTopics
 	public double betaSum; // beta * vocabularySize
 
@@ -67,49 +61,12 @@ public class GibbsSamplingDMM implements IJLDADMMModel
 	// Double array used to sample a topic
 	public double[] multiPros;
 
-	// Path to the directory containing the corpus
-	public File folderPath;
-	// Path to the topic modeling corpus
-	public String corpusPath;
-
 	// Given a document, number of times its i^{th} word appearing from
 	// the first index to the i^{th}-index in the document
 	// Example: given a document of "a a b a b c d c". We have: 1 2 1 3 2 1 1 2
 	public List<List<Integer>> occurenceToIndexCount;
 
-	public String expName = "DMMmodel";
 	public String orgExpName = "DMMmodel";
-	public String tAssignsFilePath = "";
-	public int savestep = 0;
-
-        // input readers
-        protected BufferedReader corpusReader;
-        protected BufferedReader topicAssignmentReader;
-
-        // output writers
-        protected BufferedWriter parametersWriter;
-        protected BufferedWriter dictionaryWriter;
-        protected BufferedWriter topicAssignmentsWriter;
-        protected BufferedWriter topTopicalWordsWriter;
-        protected BufferedWriter topicWordProsWriter;
-        protected BufferedWriter docTopicProsWriter;
-   
-        /**
-	 * Destination for logging, if any. Defaults to <var>System.out</var>.
-	 * @see #getLogWriter()
-	 * @see #setLogWriter(PrintStream)
-	 */
-        protected PrintStream logStream = System.out;
-        /**
-	 * Getter for {@link #logStream}: Destination for logging, if any.
-	 * @return Destination for logging, if any.
-	 */
-        public PrintStream getLogStream() { return logStream; }
-        /**
-	 * Setter for {@link #logStream}: Destination for logging, if any.
-	 * @param newLogStream Destination for logging, if any.
-	 */
-        public void setLogStream(PrintStream newLogStream) { logStream = newLogStream; }
 
         /** 
  	 * Default constructor. {@link initialize(BufferedReader,int,double,double,int,int,String,BufferedReader,int,BufferedWriter,BufferedWriter,BufferedWriter,BufferedWriter,BufferedWriter,BufferedWriter)} must be called explicitly if this constructor is used.
@@ -161,28 +118,9 @@ public class GibbsSamplingDMM implements IJLDADMMModel
 		String inExpName, String pathToTAfile, int inSaveStep)
 		throws IOException
 	{
-	   if (expName == null) expName = "DMMmodel";
-	   if (logStream != null) logStream.println("Topic modeling corpus: " + pathToCorpus);
-	   File corpusFile = new File(pathToCorpus);
-	   corpusPath = pathToCorpus;
-	   folderPath = corpusFile.getParentFile();
-	   tAssignsFilePath = pathToTAfile;
-	   if (pathToTAfile==null||pathToTAfile.length()==0)
-	   {
-		if (logStream != null) logStream.println("Topic-assigment file: " + pathToTAfile);
-	   }
-	   initialize(new BufferedReader(
-			 new InputStreamReader(new FileInputStream(corpusFile), "UTF-8")),
-		      inNumTopics, inAlpha, inBeta, inNumIterations, inTopWords,
-		      inExpName,
-		      pathToTAfile==null||pathToTAfile.length()==0?null:new BufferedReader(new InputStreamReader(new FileInputStream(pathToTAfile), "UTF-8")),
-		      inSaveStep,
-		      new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(folderPath, expName + ".paras")), "UTF-8")),
-		      new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(folderPath, expName + ".vocabulary")), "UTF-8")),
-		      new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(folderPath, expName + ".topicAssignments")), "UTF-8")),
-		      new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(folderPath, expName + ".topWords")), "UTF-8")),
-		      new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(folderPath, expName + ".phi")), "UTF-8")),
-		      new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(folderPath, expName + ".theta")), "UTF-8")));
+	   initialize(pathToCorpus, inNumTopics,
+		      inAlpha, inBeta, inNumIterations, inTopWords,
+		      inExpName, pathToTAfile, inSaveStep);
 	}
 	      
         /**
