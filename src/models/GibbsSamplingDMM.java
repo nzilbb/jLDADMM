@@ -1,9 +1,15 @@
 package models;
 
 import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.FileInputStream;
 import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
+import java.io.FileOutputStream;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.PrintStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,7 +34,7 @@ import utility.FuncUtils;
  * @author: Dat Quoc Nguyen
  */
 
-public class GibbsSamplingDMM
+public class GibbsSamplingDMM implements IJLDADMMModel
 {
 	public double alpha; // Hyper-parameter alpha
 	public double beta; // Hyper-parameter alpha
@@ -62,7 +68,7 @@ public class GibbsSamplingDMM
 	public double[] multiPros;
 
 	// Path to the directory containing the corpus
-	public String folderPath;
+	public File folderPath;
 	// Path to the topic modeling corpus
 	public String corpusPath;
 
@@ -76,6 +82,42 @@ public class GibbsSamplingDMM
 	public String tAssignsFilePath = "";
 	public int savestep = 0;
 
+        // input readers
+        protected BufferedReader corpusReader;
+        protected BufferedReader topicAssignmentReader;
+
+        // output writers
+        protected BufferedWriter parametersWriter;
+        protected BufferedWriter dictionaryWriter;
+        protected BufferedWriter topicAssignmentsWriter;
+        protected BufferedWriter topTopicalWordsWriter;
+        protected BufferedWriter topicWordProsWriter;
+        protected BufferedWriter docTopicProsWriter;
+   
+        /**
+	 * Destination for logging, if any. Defaults to <var>System.out</var>.
+	 * @see #getLogWriter()
+	 * @see #setLogWriter(PrintStream)
+	 */
+        protected PrintStream logStream = System.out;
+        /**
+	 * Getter for {@link #logStream}: Destination for logging, if any.
+	 * @return Destination for logging, if any.
+	 */
+        public PrintStream getLogStream() { return logStream; }
+        /**
+	 * Setter for {@link #logStream}: Destination for logging, if any.
+	 * @param newLogStream Destination for logging, if any.
+	 */
+        public void setLogStream(PrintStream newLogStream) { logStream = newLogStream; }
+
+        /** 
+ 	 * Default constructor. {@link initialize(BufferedReader,int,double,double,int,int,String,BufferedReader,int,BufferedWriter,BufferedWriter,BufferedWriter,BufferedWriter,BufferedWriter,BufferedWriter)} must be called explicitly if this constructor is used.
+	 */
+        public GibbsSamplingDMM()
+	{
+	}
+   
 	public GibbsSamplingDMM(String pathToCorpus, int inNumTopics,
 		double inAlpha, double inBeta, int inNumIterations, int inTopWords)
 		throws Exception
@@ -119,6 +161,57 @@ public class GibbsSamplingDMM
 		String inExpName, String pathToTAfile, int inSaveStep)
 		throws IOException
 	{
+	   if (expName == null) expName = "DMMmodel";
+	   if (logStream != null) logStream.println("Topic modeling corpus: " + pathToCorpus);
+	   File corpusFile = new File(pathToCorpus);
+	   corpusPath = pathToCorpus;
+	   folderPath = corpusFile.getParentFile();
+	   tAssignsFilePath = pathToTAfile;
+	   if (pathToTAfile==null||pathToTAfile.length()==0)
+	   {
+		if (logStream != null) logStream.println("Topic-assigment file: " + pathToTAfile);
+	   }
+	   initialize(new BufferedReader(
+			 new InputStreamReader(new FileInputStream(corpusFile), "UTF-8")),
+		      inNumTopics, inAlpha, inBeta, inNumIterations, inTopWords,
+		      inExpName,
+		      pathToTAfile==null||pathToTAfile.length()==0?null:new BufferedReader(new InputStreamReader(new FileInputStream(pathToTAfile), "UTF-8")),
+		      inSaveStep,
+		      new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(folderPath, expName + ".paras")), "UTF-8")),
+		      new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(folderPath, expName + ".vocabulary")), "UTF-8")),
+		      new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(folderPath, expName + ".topicAssignments")), "UTF-8")),
+		      new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(folderPath, expName + ".topWords")), "UTF-8")),
+		      new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(folderPath, expName + ".phi")), "UTF-8")),
+		      new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(folderPath, expName + ".theta")), "UTF-8")));
+	}
+	      
+        /**
+	 * Initialize the model.
+	 * @param corpusReader Reader that supplies the corpus, one document per line.
+	 * @param inNumTopics The number of topics.
+	 * @param inAlpha The hyper-parameter <var>alpha</var>.
+	 * @param inBeta The hyper-parameter <var>beta</var>.
+	 * @param inNumIterations Number of Gibbs sampling iterations.
+	 * @param inTopWords Number of most probable words for each topic.
+	 * @param inExpName Experiment name (if any).
+	 * @param topicAssignmentReader Reader that supplies topic assignments.
+	 * @param inSaveStep A step to save the sampling outputs. A value of 0 only saves the output from the last sample.
+	 * @param parametersWriter Writer for parameters output.
+	 * @param dictionaryWriter Writer for dictionary.
+	 * @param topicAssignmentsWriter Writer for topic assigments.
+	 * @param topTopicalWordsWriter Writer for top topical words.
+	 * @param topicWordProsWriter Writer for word pros.
+	 * @param docTopicProsWriter Writer for doc pros.
+	 * @throws Exception If an error occurs.
+	 */
+        public void initialize(BufferedReader corpusReader, int inNumTopics,
+			       double inAlpha, double inBeta, int inNumIterations, int inTopWords,
+			       String inExpName, BufferedReader topicAssignmentReader, int inSaveStep,
+			       BufferedWriter parametersWriter, BufferedWriter dictionaryWriter,
+			       BufferedWriter topicAssignmentsWriter, BufferedWriter topTopicalWordsWriter,
+			       BufferedWriter topicWordProsWriter, BufferedWriter docTopicProsWriter)
+	   throws IOException
+        {
 		alpha = inAlpha;
 		beta = inBeta;
 		numTopics = inNumTopics;
@@ -127,13 +220,21 @@ public class GibbsSamplingDMM
 		savestep = inSaveStep;
 		expName = inExpName;
 		orgExpName = expName;
-		corpusPath = pathToCorpus;
-		folderPath = pathToCorpus.substring(
-			0,
-			Math.max(pathToCorpus.lastIndexOf("/"),
-				pathToCorpus.lastIndexOf("\\")) + 1);
-
-		System.out.println("Reading topic modeling corpus: " + pathToCorpus);
+		if (folderPath == null)
+		{ // deduce temporary file directory
+		   File tmp = File.createTempFile("-", ".tmp");
+		   folderPath = tmp.getParentFile();
+		   tmp.delete();
+		}
+		
+		this.parametersWriter = parametersWriter;
+		this.dictionaryWriter = dictionaryWriter;		
+		this.topicAssignmentsWriter = topicAssignmentsWriter;
+		this.topTopicalWordsWriter = topTopicalWordsWriter;	       
+		this.topicWordProsWriter = topicWordProsWriter;
+		this.docTopicProsWriter = docTopicProsWriter;
+		
+		if (logStream != null) logStream.println("Reading topic modeling corpus...");
 
 		word2IdVocabulary = new HashMap<String, Integer>();
 		id2WordVocabulary = new HashMap<Integer, String>();
@@ -145,7 +246,7 @@ public class GibbsSamplingDMM
 		BufferedReader br = null;
 		try {
 			int indexWord = -1;
-			br = new BufferedReader(new FileReader(pathToCorpus));
+			br = corpusReader;
 			for (String doc; (doc = br.readLine()) != null;) {
 				if (doc.trim().length() == 0)
 					continue;
@@ -198,18 +299,17 @@ public class GibbsSamplingDMM
 		alphaSum = numTopics * alpha;
 		betaSum = vocabularySize * beta;
 
-		System.out.println("Corpus size: " + numDocuments + " docs, "
+		if (logStream != null) logStream.println("Corpus size: " + numDocuments + " docs, "
 			+ numWordsInCorpus + " words");
-		System.out.println("Vocabuary size: " + vocabularySize);
-		System.out.println("Number of topics: " + numTopics);
-		System.out.println("alpha: " + alpha);
-		System.out.println("beta: " + beta);
-		System.out.println("Number of sampling iterations: " + numIterations);
-		System.out.println("Number of top topical words: " + topWords);
+		if (logStream != null) logStream.println("Vocabuary size: " + vocabularySize);
+		if (logStream != null) logStream.println("Number of topics: " + numTopics);
+		if (logStream != null) logStream.println("alpha: " + alpha);
+		if (logStream != null) logStream.println("beta: " + beta);
+		if (logStream != null) logStream.println("Number of sampling iterations: " + numIterations);
+		if (logStream != null) logStream.println("Number of top topical words: " + topWords);
 
-		tAssignsFilePath = pathToTAfile;
-		if (tAssignsFilePath.length() > 0)
-			initialize(tAssignsFilePath);
+		if (topicAssignmentReader != null)
+			initialize(topicAssignmentReader);
 		else
 			initialize();
 	}
@@ -220,7 +320,7 @@ public class GibbsSamplingDMM
 	public void initialize()
 		throws IOException
 	{
-		System.out.println("Randomly initialzing topic assignments ...");
+		if (logStream != null) logStream.println("Randomly initialzing topic assignments ...");
 		topicAssignments = new ArrayList<Integer>();
 		for (int i = 0; i < numDocuments; i++) {
 			int topic = FuncUtils.nextDiscrete(multiPros); // Sample a topic
@@ -237,16 +337,15 @@ public class GibbsSamplingDMM
 	/**
 	 * Initialize topic assignments from a given file
 	 */
-	public void initialize(String pathToTopicAssignmentFile)
+	public void initialize(BufferedReader topicAssignmentReader)
 	{
-		System.out.println("Reading topic-assigment file: "
-			+ pathToTopicAssignmentFile);
+		if (logStream != null) logStream.println("Reading topic-assigment file...");
 
 		topicAssignments = new ArrayList<Integer>();
 
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader(pathToTopicAssignmentFile));
+			br = topicAssignmentReader;
 			int docID = 0;
 			int numWords = 0;
 			for (String line; (line = br.readLine()) != null;) {
@@ -265,7 +364,7 @@ public class GibbsSamplingDMM
 			}
 
 			if ((docID != numDocuments) || (numWords != numWordsInCorpus)) {
-				System.out
+				if (logStream != null) logStream
 					.println("The topic modeling corpus and topic assignment file are not consistent!!!");
 				throw new Exception();
 			}
@@ -281,18 +380,18 @@ public class GibbsSamplingDMM
 		writeParameters();
 		writeDictionary();
 
-		System.out.println("Running Gibbs sampling inference: ");
+		if (logStream != null) logStream.println("Running Gibbs sampling inference: ");
 
 		for (int iter = 1; iter <= numIterations; iter++) {
 
-			System.out.println("\tSampling iteration: " + (iter));
-			// System.out.println("\t\tPerplexity: " + computePerplexity());
+			if (logStream != null) logStream.println("\tSampling iteration: " + (iter));
+			// if (logStream != null) logStream.println("\t\tPerplexity: " + computePerplexity());
 
 			sampleInSingleIteration();
 
 			if ((savestep > 0) && (iter % savestep == 0)
 				&& (iter < numIterations)) {
-				System.out.println("\t\tSaving the output from the " + iter
+				if (logStream != null) logStream.println("\t\tSaving the output from the " + iter
 					+ "^{th} sample");
 				expName = orgExpName + "-" + iter;
 				write();
@@ -300,10 +399,10 @@ public class GibbsSamplingDMM
 		}
 		expName = orgExpName;
 
-		System.out.println("Writing output from the last sample ...");
+		if (logStream != null) logStream.println("Writing output from the last sample ...");
 		write();
 
-		System.out.println("Sampling completed!");
+		if (logStream != null) logStream.println("Sampling completed!");
 
 	}
 
@@ -349,10 +448,10 @@ public class GibbsSamplingDMM
 	public void writeParameters()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".paras"));
+		BufferedWriter writer = parametersWriter;
 		writer.write("-model" + "\t" + "DMM");
-		writer.write("\n-corpus" + "\t" + corpusPath);
+		if (corpusPath != null)
+		   writer.write("\n-corpus" + "\t" + corpusPath);
 		writer.write("\n-ntopics" + "\t" + numTopics);
 		writer.write("\n-alpha" + "\t" + alpha);
 		writer.write("\n-beta" + "\t" + beta);
@@ -370,8 +469,7 @@ public class GibbsSamplingDMM
 	public void writeDictionary()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".vocabulary"));
+		BufferedWriter writer = dictionaryWriter;
 		for (int id = 0; id < vocabularySize; id++)
 			writer.write(id2WordVocabulary.get(id) + " " + id + "\n");
 		writer.close();
@@ -380,8 +478,8 @@ public class GibbsSamplingDMM
 	public void writeIDbasedCorpus()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".IDcorpus"));
+		BufferedWriter writer = new BufferedWriter(
+		   new FileWriter(new File(folderPath, expName + ".IDcorpus")));
 		for (int dIndex = 0; dIndex < numDocuments; dIndex++) {
 			int docSize = corpus.get(dIndex).size();
 			for (int wIndex = 0; wIndex < docSize; wIndex++) {
@@ -395,8 +493,7 @@ public class GibbsSamplingDMM
 	public void writeTopicAssignments()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".topicAssignments"));
+		BufferedWriter writer = topicAssignmentsWriter;
 		for (int dIndex = 0; dIndex < numDocuments; dIndex++) {
 			int docSize = corpus.get(dIndex).size();
 			int topic = topicAssignments.get(dIndex);
@@ -411,8 +508,7 @@ public class GibbsSamplingDMM
 	public void writeTopTopicalWords()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".topWords"));
+		BufferedWriter writer = topTopicalWordsWriter;
 
 		for (int tIndex = 0; tIndex < numTopics; tIndex++) {
 			writer.write("Topic" + new Integer(tIndex) + ":");
@@ -446,8 +542,7 @@ public class GibbsSamplingDMM
 	public void writeTopicWordPros()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".phi"));
+		BufferedWriter writer = topicWordProsWriter;
 		for (int i = 0; i < numTopics; i++) {
 			for (int j = 0; j < vocabularySize; j++) {
 				double pro = (topicWordCount[i][j] + beta)
@@ -462,8 +557,8 @@ public class GibbsSamplingDMM
 	public void writeTopicWordCount()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".WTcount"));
+		BufferedWriter writer = new BufferedWriter(
+		   new FileWriter(new File(folderPath, expName + ".WTcount")));
 		for (int i = 0; i < numTopics; i++) {
 			for (int j = 0; j < vocabularySize; j++) {
 				writer.write(topicWordCount[i][j] + " ");
@@ -477,8 +572,7 @@ public class GibbsSamplingDMM
 	public void writeDocTopicPros()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".theta"));
+		BufferedWriter writer = docTopicProsWriter;
 
 		for (int i = 0; i < numDocuments; i++) {
 			int docSize = corpus.get(i).size();
