@@ -1,9 +1,15 @@
 package models;
 
 import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.FileInputStream;
 import java.io.BufferedWriter;
+import java.io.OutputStreamWriter;
+import java.io.FileOutputStream;
+import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.PrintStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,14 +33,8 @@ import utility.FuncUtils;
  * @author: Dat Quoc Nguyen
  */
 
-public class GibbsSamplingLDA
+public class GibbsSamplingLDA extends JLDADMMModel
 {
-	public double alpha; // Hyper-parameter alpha
-	public double beta; // Hyper-parameter alpha
-	public int numTopics; // Number of topics
-	public int numIterations; // Number of Gibbs sampling iterations
-	public int topWords; // Number of most probable words for each topic
-
 	public double alphaSum; // alpha * numTopics
 	public double betaSum; // beta * vocabularySize
 
@@ -64,16 +64,15 @@ public class GibbsSamplingLDA
 	// Double array used to sample a topic
 	public double[] multiPros;
 
-	// Path to the directory containing the corpus
-	public String folderPath;
-	// Path to the topic modeling corpus
-	public String corpusPath;
-
-	public String expName = "LDAmodel";
 	public String orgExpName = "LDAmodel";
-	public String tAssignsFilePath = "";
-	public int savestep = 0;
 
+        /** 
+ 	 * Default constructor. {@link initialize(BufferedReader,int,double,double,int,int,String,BufferedReader,int,BufferedWriter,BufferedWriter,BufferedWriter,BufferedWriter,BufferedWriter,BufferedWriter)} must be called explicitly if this constructor is used.
+	 */
+	public GibbsSamplingLDA()
+	{
+	}
+   
 	public GibbsSamplingLDA(String pathToCorpus, int inNumTopics,
 		double inAlpha, double inBeta, int inNumIterations, int inTopWords)
 		throws Exception
@@ -114,6 +113,37 @@ public class GibbsSamplingLDA
 		String inExpName, String pathToTAfile, int inSaveStep)
 		throws Exception
 	{
+	   initialize(pathToCorpus, inNumTopics,
+		      inAlpha, inBeta, inNumIterations, inTopWords,
+		      inExpName, pathToTAfile, inSaveStep);
+	}
+        /**
+	 * Initialize the model.
+	 * @param corpusReader Reader that supplies the corpus, one document per line.
+	 * @param inNumTopics The number of topics.
+	 * @param inAlpha The hyper-parameter <var>alpha</var>.
+	 * @param inBeta The hyper-parameter <var>beta</var>.
+	 * @param inNumIterations Number of Gibbs sampling iterations.
+	 * @param inTopWords Number of most probable words for each topic.
+	 * @param inExpName Experiment name (if any).
+	 * @param topicAssignmentReader Reader that supplies topic assignments.
+	 * @param inSaveStep A step to save the sampling outputs. A value of 0 only saves the output from the last sample.
+	 * @param parametersWriter Writer for parameters output.
+	 * @param dictionaryWriter Writer for dictionary.
+	 * @param topicAssignmentsWriter Writer for topic assigments.
+	 * @param topTopicalWordsWriter Writer for top topical words.
+	 * @param topicWordProsWriter Writer for word pros.
+	 * @param docTopicProsWriter Writer for doc pros.
+	 * @throws Exception If an error occurs.
+	 */
+        public void initialize(BufferedReader corpusReader, int inNumTopics,
+			       double inAlpha, double inBeta, int inNumIterations, int inTopWords,
+			       String inExpName, BufferedReader topicAssignmentReader, int inSaveStep,
+			       BufferedWriter parametersWriter, BufferedWriter dictionaryWriter,
+			       BufferedWriter topicAssignmentsWriter, BufferedWriter topTopicalWordsWriter,
+			       BufferedWriter topicWordProsWriter, BufferedWriter docTopicProsWriter)
+	   throws IOException
+        {
 
 		alpha = inAlpha;
 		beta = inBeta;
@@ -123,13 +153,21 @@ public class GibbsSamplingLDA
 		savestep = inSaveStep;
 		expName = inExpName;
 		orgExpName = expName;
-		corpusPath = pathToCorpus;
-		folderPath = pathToCorpus.substring(
-			0,
-			Math.max(pathToCorpus.lastIndexOf("/"),
-				pathToCorpus.lastIndexOf("\\")) + 1);
+		if (folderPath == null)
+		{ // deduce temporary file directory
+		   File tmp = File.createTempFile("-", ".tmp");
+		   folderPath = tmp.getParentFile();
+		   tmp.delete();
+		}
+		
+		this.parametersWriter = parametersWriter;
+		this.dictionaryWriter = dictionaryWriter;		
+		this.topicAssignmentsWriter = topicAssignmentsWriter;
+		this.topTopicalWordsWriter = topTopicalWordsWriter;	       
+		this.topicWordProsWriter = topicWordProsWriter;
+		this.docTopicProsWriter = docTopicProsWriter;
 
-		System.out.println("Reading topic modeling corpus: " + pathToCorpus);
+		if (logStream != null) logStream.println("Reading topic modeling corpus...");
 
 		word2IdVocabulary = new HashMap<String, Integer>();
 		id2WordVocabulary = new HashMap<Integer, String>();
@@ -140,7 +178,7 @@ public class GibbsSamplingLDA
 		BufferedReader br = null;
 		try {
 			int indexWord = -1;
-			br = new BufferedReader(new FileReader(pathToCorpus));
+			br = corpusReader;
 			for (String doc; (doc = br.readLine()) != null;) {
 
 				if (doc.trim().length() == 0)
@@ -184,18 +222,17 @@ public class GibbsSamplingLDA
 		alphaSum = numTopics * alpha;
 		betaSum = vocabularySize * beta;
 
-		System.out.println("Corpus size: " + numDocuments + " docs, "
+		if (logStream != null) logStream.println("Corpus size: " + numDocuments + " docs, "
 			+ numWordsInCorpus + " words");
-		System.out.println("Vocabuary size: " + vocabularySize);
-		System.out.println("Number of topics: " + numTopics);
-		System.out.println("alpha: " + alpha);
-		System.out.println("beta: " + beta);
-		System.out.println("Number of sampling iterations: " + numIterations);
-		System.out.println("Number of top topical words: " + topWords);
+		if (logStream != null) logStream.println("Vocabuary size: " + vocabularySize);
+		if (logStream != null) logStream.println("Number of topics: " + numTopics);
+		if (logStream != null) logStream.println("alpha: " + alpha);
+		if (logStream != null) logStream.println("beta: " + beta);
+		if (logStream != null) logStream.println("Number of sampling iterations: " + numIterations);
+		if (logStream != null) logStream.println("Number of top topical words: " + topWords);
 
-		tAssignsFilePath = pathToTAfile;
-		if (tAssignsFilePath.length() > 0)
-			initialize(tAssignsFilePath);
+		if (topicAssignmentReader != null)
+			initialize(topicAssignmentReader);
 		else
 			initialize();
 	}
@@ -206,7 +243,7 @@ public class GibbsSamplingLDA
 	public void initialize()
 		throws IOException
 	{
-		System.out.println("Randomly initializing topic assignments ...");
+		if (logStream != null) logStream.println("Randomly initializing topic assignments ...");
 
 		topicAssignments = new ArrayList<List<Integer>>();
 
@@ -230,16 +267,15 @@ public class GibbsSamplingLDA
 	/**
 	 * Initialize topic assignments from a given file
 	 */
-	public void initialize(String pathToTopicAssignmentFile)
+	public void initialize(BufferedReader topicAssignmentReader)
 	{
-		System.out.println("Reading topic-assignment file: "
-			+ pathToTopicAssignmentFile);
+		if (logStream != null) logStream.println("Reading topic-assignment file...");
 
 		topicAssignments = new ArrayList<List<Integer>>();
 
 		BufferedReader br = null;
 		try {
-			br = new BufferedReader(new FileReader(pathToTopicAssignmentFile));
+			br = topicAssignmentReader;
 			int docID = 0;
 			int numWords = 0;
 			for (String line; (line = br.readLine()) != null;) {
@@ -261,7 +297,7 @@ public class GibbsSamplingLDA
 			}
 
 			if ((docID != numDocuments) || (numWords != numWordsInCorpus)) {
-				System.out
+				if (logStream != null) logStream
 					.println("The topic modeling corpus and topic assignment file are not consistent!!!");
 				throw new Exception();
 			}
@@ -277,18 +313,18 @@ public class GibbsSamplingLDA
 		writeParameters();
 		writeDictionary();
 
-		System.out.println("Running Gibbs sampling inference: ");
+		if (logStream != null) logStream.println("Running Gibbs sampling inference: ");
 
 		for (int iter = 1; iter <= numIterations; iter++) {
 
-			System.out.println("\tSampling iteration: " + (iter));
-			// System.out.println("\t\tPerplexity: " + computePerplexity());
+			if (logStream != null) logStream.println("\tSampling iteration: " + (iter));
+			// if (logStream != null) logStream.println("\t\tPerplexity: " + computePerplexity());
 
 			sampleInSingleIteration();
 
 			if ((savestep > 0) && (iter % savestep == 0)
 				&& (iter < numIterations)) {
-				System.out.println("\t\tSaving the output from the " + iter
+				if (logStream != null) logStream.println("\t\tSaving the output from the " + iter
 					+ "^{th} sample");
 				expName = orgExpName + "-" + iter;
 				write();
@@ -296,10 +332,10 @@ public class GibbsSamplingLDA
 		}
 		expName = orgExpName;
 
-		System.out.println("Writing output from the last sample ...");
+		if (logStream != null) logStream.println("Writing output from the last sample ...");
 		write();
 
-		System.out.println("Sampling completed!");
+		if (logStream != null) logStream.println("Sampling completed!");
 
 	}
 
@@ -345,8 +381,7 @@ public class GibbsSamplingLDA
 	public void writeParameters()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".paras"));
+		BufferedWriter writer = parametersWriter;
 		writer.write("-model" + "\t" + "LDA");
 		writer.write("\n-corpus" + "\t" + corpusPath);
 		writer.write("\n-ntopics" + "\t" + numTopics);
@@ -355,7 +390,7 @@ public class GibbsSamplingLDA
 		writer.write("\n-niters" + "\t" + numIterations);
 		writer.write("\n-twords" + "\t" + topWords);
 		writer.write("\n-name" + "\t" + expName);
-		if (tAssignsFilePath.length() > 0)
+		if (tAssignsFilePath != null && tAssignsFilePath.length() > 0)
 			writer.write("\n-initFile" + "\t" + tAssignsFilePath);
 		if (savestep > 0)
 			writer.write("\n-sstep" + "\t" + savestep);
@@ -366,8 +401,7 @@ public class GibbsSamplingLDA
 	public void writeDictionary()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".vocabulary"));
+		BufferedWriter writer = dictionaryWriter;
 		for (int id = 0; id < vocabularySize; id++)
 			writer.write(id2WordVocabulary.get(id) + " " + id + "\n");
 		writer.close();
@@ -376,8 +410,8 @@ public class GibbsSamplingLDA
 	public void writeIDbasedCorpus()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".IDcorpus"));
+		BufferedWriter writer
+		   = new BufferedWriter(new FileWriter(new File(folderPath, expName + ".IDcorpus")));
 		for (int dIndex = 0; dIndex < numDocuments; dIndex++) {
 			int docSize = corpus.get(dIndex).size();
 			for (int wIndex = 0; wIndex < docSize; wIndex++) {
@@ -391,8 +425,7 @@ public class GibbsSamplingLDA
 	public void writeTopicAssignments()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".topicAssignments"));
+		BufferedWriter writer = topicAssignmentsWriter;
 		for (int dIndex = 0; dIndex < numDocuments; dIndex++) {
 			int docSize = corpus.get(dIndex).size();
 			for (int wIndex = 0; wIndex < docSize; wIndex++) {
@@ -406,8 +439,7 @@ public class GibbsSamplingLDA
 	public void writeTopTopicalWords()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".topWords"));
+		BufferedWriter writer = topTopicalWordsWriter;
 
 		for (int tIndex = 0; tIndex < numTopics; tIndex++) {
 			writer.write("Topic" + new Integer(tIndex) + ":");
@@ -441,8 +473,7 @@ public class GibbsSamplingLDA
 	public void writeTopicWordPros()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".phi"));
+		BufferedWriter writer = topicWordProsWriter;
 		for (int i = 0; i < numTopics; i++) {
 			for (int j = 0; j < vocabularySize; j++) {
 				double pro = (topicWordCount[i][j] + beta)
@@ -457,8 +488,8 @@ public class GibbsSamplingLDA
 	public void writeTopicWordCount()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".WTcount"));
+		BufferedWriter writer = new BufferedWriter(
+		   new FileWriter(new File(folderPath, expName + ".WTcount")));
 		for (int i = 0; i < numTopics; i++) {
 			for (int j = 0; j < vocabularySize; j++) {
 				writer.write(topicWordCount[i][j] + " ");
@@ -472,8 +503,7 @@ public class GibbsSamplingLDA
 	public void writeDocTopicPros()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".theta"));
+		BufferedWriter writer = docTopicProsWriter;
 		for (int i = 0; i < numDocuments; i++) {
 			for (int j = 0; j < numTopics; j++) {
 				double pro = (docTopicCount[i][j] + alpha)
@@ -488,8 +518,8 @@ public class GibbsSamplingLDA
 	public void writeDocTopicCount()
 		throws IOException
 	{
-		BufferedWriter writer = new BufferedWriter(new FileWriter(folderPath
-			+ expName + ".DTcount"));
+		BufferedWriter writer = new BufferedWriter(
+		   new FileWriter(new File(folderPath, expName + ".DTcount")));
 		for (int i = 0; i < numDocuments; i++) {
 			for (int j = 0; j < numTopics; j++) {
 				writer.write(docTopicCount[i][j] + " ");
