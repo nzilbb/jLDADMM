@@ -37,7 +37,7 @@ import java.io.IOException;
  * @author Robert Fromont robert.fromont@canterbury.ac.nz
  */
 
-public abstract class JLDADMMModelBase
+public abstract class JLDADMMModel
 {
    // Attributes
    
@@ -180,4 +180,4 @@ public abstract class JLDADMMModelBase
     */
    public abstract void inference() throws IOException;
    
-} // end of class IJLDADMMModel
+} // end of class JLDADMMModel

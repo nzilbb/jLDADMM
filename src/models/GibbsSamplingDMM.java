@@ -34,7 +34,7 @@ import utility.FuncUtils;
  * @author: Dat Quoc Nguyen
  */
 
-public class GibbsSamplingDMM extends JLDADMMModelBase
+public class GibbsSamplingDMM extends JLDADMMModel
 {
 	public double alphaSum; // alpha * numTopics
 	public double betaSum; // beta * vocabularySize
