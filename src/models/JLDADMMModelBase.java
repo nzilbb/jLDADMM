@@ -117,7 +117,36 @@ public abstract class JLDADMMModelBase
 		 new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(folderPath, expName + ".phi")), "UTF-8")),
 		 new BufferedWriter(new OutputStreamWriter(new FileOutputStream(new File(folderPath, expName + ".theta")), "UTF-8")));
    }
-   
+
+   /**
+    * Utility function that implementors can use.
+    */
+   public void initialize(File corpusFile, int inNumTopics,
+			  double inAlpha, double inBeta, int inNumIterations, int inTopWords,
+			  String inExpName, String pathToTAfile, int inSaveStep,
+			  File parametersFile, File dictionaryFile,
+			  File topicAssignmentsFile, File topTopicalWordsFile,
+			  File topicWordProsFile, File docTopicProsFile)
+      throws IOException
+   {
+      if (expName == null) expName = "DMMmodel";
+      corpusPath = corpusFile.getPath();
+      folderPath = corpusFile.getParentFile();
+      tAssignsFilePath = pathToTAfile;
+      initialize(new BufferedReader(
+		    new InputStreamReader(new FileInputStream(corpusFile), "UTF-8")),
+		 inNumTopics, inAlpha, inBeta, inNumIterations, inTopWords,
+		 inExpName,
+		 pathToTAfile==null||pathToTAfile.length()==0?null:new BufferedReader(new InputStreamReader(new FileInputStream(pathToTAfile), "UTF-8")),
+		 inSaveStep,
+		 new BufferedWriter(new OutputStreamWriter(new FileOutputStream(parametersFile), "UTF-8")),
+		 new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dictionaryFile), "UTF-8")),
+		 new BufferedWriter(new OutputStreamWriter(new FileOutputStream(topicAssignmentsFile), "UTF-8")),
+		 new BufferedWriter(new OutputStreamWriter(new FileOutputStream(topTopicalWordsFile), "UTF-8")),
+		 new BufferedWriter(new OutputStreamWriter(new FileOutputStream(topicWordProsFile), "UTF-8")),
+		 new BufferedWriter(new OutputStreamWriter(new FileOutputStream(docTopicProsFile), "UTF-8")));
+   }
+
    /**
     * Initialize the model.
     * @param corpusReader Reader that supplies the corpus, one document per line.
