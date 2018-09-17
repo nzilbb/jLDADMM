@@ -390,7 +390,7 @@ public class GibbsSamplingLDA extends JLDADMMModel
 		writer.write("\n-niters" + "\t" + numIterations);
 		writer.write("\n-twords" + "\t" + topWords);
 		writer.write("\n-name" + "\t" + expName);
-		if (tAssignsFilePath.length() > 0)
+		if (tAssignsFilePath != null && tAssignsFilePath.length() > 0)
 			writer.write("\n-initFile" + "\t" + tAssignsFilePath);
 		if (savestep > 0)
 			writer.write("\n-sstep" + "\t" + savestep);
