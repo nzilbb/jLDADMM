@@ -149,7 +149,7 @@ public abstract class JLDADMMModel
 
    /**
     * Initialize the model.
-    * @param corpusReader Reader that supplies the corpus, one document per line.
+    * @param corpusReader Reader that supplies the corpus, one document per line.  This can be a subclassed implementation, and needn't correctly implement all methods; the only method called is <code>readLine</code>.
     * @param inNumTopics The number of topics.
     * @param inAlpha The hyper-parameter <var>alpha</var>.
     * @param inBeta The hyper-parameter <var>beta</var>.
