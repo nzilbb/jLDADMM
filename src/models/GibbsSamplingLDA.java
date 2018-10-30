@@ -155,7 +155,7 @@ public class GibbsSamplingLDA extends JLDADMMModel
 		orgExpName = expName;
 		if (folderPath == null)
 		{ // deduce temporary file directory
-		   File tmp = File.createTempFile("-", ".tmp");
+		   File tmp = File.createTempFile(expName+"-", ".tmp");
 		   folderPath = tmp.getParentFile();
 		   tmp.delete();
 		}
