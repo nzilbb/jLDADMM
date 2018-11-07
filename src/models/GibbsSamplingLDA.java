@@ -152,6 +152,8 @@ public class GibbsSamplingLDA extends JLDADMMModel
 		topWords = inTopWords;
 		savestep = inSaveStep;
 		expName = inExpName;
+		if (expName == null) expName = orgExpName;
+		if (expName.length() < 2) expName += "__"; // min length of 2
 		orgExpName = expName;
 		if (folderPath == null)
 		{ // deduce temporary file directory
